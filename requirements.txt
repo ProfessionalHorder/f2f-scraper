@@ -1,0 +1,4 @@
+requests>=2.25
+tqdm>=4.60
+beautifulsoup4>=4.11
+yt-dlp
