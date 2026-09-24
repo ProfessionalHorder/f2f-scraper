@@ -1,0 +1,5 @@
+# f2f.com cookies
+sessionid=
+csrftoken=
+shield_FPC=
+splash=true
