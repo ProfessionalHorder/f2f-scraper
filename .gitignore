@@ -1,0 +1,25 @@
+# sessions & credentials - NEVER commit
+cookies.txt
+*.cookies
+.env
+
+# downloaded content
+downloads/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# editor / OS junk
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# probe/debug leftovers
+probe_*.ts
+*.m3u8
+_unresolved_media.json
