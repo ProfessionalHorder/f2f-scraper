@@ -23,3 +23,6 @@ Thumbs.db
 probe_*.ts
 *.m3u8
 _unresolved_media.json
+
+logs/
+run.lock/
