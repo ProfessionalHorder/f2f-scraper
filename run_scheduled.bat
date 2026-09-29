@@ -1,29 +1,40 @@
 @echo off
 rem ============================================================
-rem  f2f-scraper - scheduled run wrapper
-rem  Downloads NEW posts/stories/chats for all creators you
-rem  currently follow or are a fan of. Idempotent: existing
-rem  files are skipped, so it only fetches new content.
-rem
-rem  Output log:  logs\scheduler.log
+rem  f2f-scraper - scheduled run wrapper (portable, relative path)
+rem  Works wherever this .bat lives. Output log: logs\scheduler.log
 rem ============================================================
+setlocal enabledelayedexpansion
 
-setlocal
-set "SCRIPTDIR=C:\Users\MikeSpaans\Documents\f2f-scraper-2026"
+rem --- Resolve the folder THIS batch file lives in (no hardcoded path) ---
+set "SCRIPTDIR=%~dp0"
+set "SCRIPTDIR=%SCRIPTDIR:~0,-1%"
+
 set "LOGDIR=%SCRIPTDIR%\logs"
 set "LOCKDIR=%SCRIPTDIR%\run.lock"
 
-rem --- Force UTF-8 so emoji's in creator names don't crash the scripts ---
+rem --- Force UTF-8 so emoji names don't crash the scripts ---
 chcp 65001 >nul
 set "PYTHONIOENCODING=utf-8"
 set "PYTHONUTF8=1"
 
 if not exist "%LOGDIR%" mkdir "%LOGDIR%"
 
-rem --- lock: skip if a previous run is still active ---
+rem --- lock check: skip if active, remove if stale (>2h) ---
+if exist "%LOCKDIR%" (
+    for /f "usebackq" %%e in (`powershell -NoProfile -Command ^
+        "if ((Get-Item '%LOCKDIR%').CreationTime.AddHours(2) -lt (Get-Date)) { 'expired' } else { 'active' }"`) do set "LOCKSTATE=%%e"
+    if "!LOCKSTATE!"=="expired" (
+        echo [%date% %time%] stale lock detected ^(older than 2h^) - removing >> "%LOGDIR%\scheduler.log"
+        rmdir /s /q "%LOCKDIR%"
+    ) else (
+        echo [%date% %time%] previous run still active - skipping >> "%LOGDIR%\scheduler.log"
+        goto :eof
+    )
+)
+
 mkdir "%LOCKDIR%" 2>nul
 if errorlevel 1 (
-    echo [%date% %time%] previous run still active - skipping >> "%LOGDIR%\scheduler.log"
+    echo [%date% %time%] could not acquire lock - skipping >> "%LOGDIR%\scheduler.log"
     goto :eof
 )
 
@@ -32,7 +43,7 @@ echo ================ %date% %time% ================ >> "%LOGDIR%\scheduler.log"
 
 cd /d "%SCRIPTDIR%"
 if errorlevel 1 (
-    echo [%date% %time%] ERROR: folder not found: %SCRIPTDIR% >> "%LOGDIR%\scheduler.log"
+    echo [%date% %time%] ERROR: could not cd to script folder >> "%LOGDIR%\scheduler.log"
     rmdir "%LOCKDIR%"
     goto :eof
 )
